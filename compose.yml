@@ -48,6 +48,7 @@ services:
     image: 'xhofe/alist:latest'
 
   ariang:
+    container_name: ariang
     image: p3terx/ariang
     command: --port 6880 --ipv6
     ports:
@@ -59,6 +60,7 @@ services:
         max-size: 1m
 
   aria2:
+    container_name: aria2-pro
     image: p3terx/aria2-pro
     environment:
       - PUID=0
