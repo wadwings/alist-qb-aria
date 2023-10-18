@@ -1,0 +1,88 @@
+services:
+  qbittorrent-nox:
+    # for debugging
+    #cap_add:
+      #- SYS_PTRACE
+    container_name: qbittorrent-nox
+    environment:
+      #- PAGID=10000
+      #- PGID=1000
+      #- PUID=1000
+      - PUID=0
+      - PGID=0
+      - UMASK=022
+      - TZ=UTC
+      - QBT_EULA=${QBT_EULA}
+      - QBT_VERSION=${QBT_VERSION}
+      - QBT_WEBUI_PORT=${QBT_WEBUI_PORT}
+      #- TZ=UTC
+      #- UMASK=022
+    image: qbittorrentofficial/qbittorrent-nox:${QBT_VERSION}
+    ports:
+      # for bittorrent traffic
+      - ${QBT_TRAFFIC_PORT}:${QBT_TRAFFIC_PORT}
+      # for WebUI
+      - ${QBT_WEBUI_PORT}:${QBT_WEBUI_PORT}/tcp
+    read_only: true
+    stop_grace_period: 30m
+    tmpfs:
+      - /tmp
+    tty: true
+    volumes:
+      - ${QBT_CONFIG_PATH}:/config
+      - ${DOWNLOADS_PATH}:/downloads
+
+  alist:
+    restart: always
+    volumes:
+      - '${ALIST_CONFIG_PATH}:/opt/alist/data'
+      - '${STORAGE_PATH}:/opt/alist/storage'
+    ports:
+      - '${ALIST_PORT}:5244'
+    environment:
+      - PUID=0
+      - PGID=0
+      - UMASK=022
+      - TZ=UTC
+    container_name: alist
+    image: 'xhofe/alist:latest'
+
+  ariang:
+    image: p3terx/ariang
+    command: --port 6880 --ipv6
+    ports:
+      - ${ARIAGN_WEBUI_PORT}:6880
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 1m
+
+  aria2:
+    image: p3terx/aria2-pro
+    environment:
+      - PUID=0
+      - PGID=0
+      - UMASK_SET=022
+      - RPC_SECRET=P3TERX
+      - RPC_PORT=6800
+      - LISTEN_PORT=6888
+      - DISK_CACHE=64M
+      - IPV6_MODE=false
+      - UPDATE_TRACKERS=true
+      - TZ=Asia/Shanghai
+    volumes:
+      - ${ARIA_CONFIG_PATH}:/config
+      - ${DOWNLOADS_PATH}:/downloads
+# If you use host network mode, then no port mapping is required.
+# This is the easiest way to use IPv6 networks.
+    ports:
+      - ${ARIA_RPC_PORT}:6800
+      - ${ARIA_LISTEN_PORT}:6888
+      - ${ARIA_LISTEN_PORT}:6888/udp
+    restart: unless-stopped
+# Since Aria2 will continue to generate logs, limit the log size to 1M to prevent your hard disk from running out of space.
+    logging:
+      driver: json-file
+      options:
+        max-size: 1m
